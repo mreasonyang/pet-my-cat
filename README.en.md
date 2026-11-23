@@ -2,6 +2,10 @@
 
 # Pet My Cat (我家猫来客串)
 
+**Pet My Cat** is a fan-made Codex skill and a tribute to **Pet the Cat** (*猫撫でシミュレーター*), the browser game by [zubu (@zubububu)](https://x.com/zubububu). The original lets you stroke a cat’s back and play with its tail. Give this skill a photo of your own cat, and you can do the same in a local copy of zubu’s game.
+
+Play the original → <https://pet-the-cat.pages.dev/>
+
 A clear top-down, full-body photo of your cat can be turned directly into an interactive guest you can pet on the back and swish by the tail right in your browser. If you only have front, side, or curled-up everyday snapshots, you can optionally use an image tool to synthesize a top-down posture from your reference photos—or, if your photos must stay on your device and no local image generator is available, snap one top-down photo showing the back and tail to follow the pure real-photo cutout route. Your finished cat works inside your open [upstream site](https://pet-the-cat.pages.dev/) tab or as an offline personal webpage. Close the temporary view or refresh the upstream page anytime to return to the original site.
 
 ## Getting Started
@@ -33,4 +37,4 @@ The skill itself supports `zh-CN` (Simplified Chinese), `ja` (Japanese), and `en
 
 - **Local assembly & on-demand AI consent**: Your personal webpage is assembled locally using Python 3, and the bundled photo slicing and trimming helper uses Pillow. Real-photo cutouts can be completed entirely on your machine. Only if you choose cloud-based image generation for viewpoint synthesis or partial inpainting will reference photos be sent to an external service—and the agent will name the specific cloud service and ask for your consent beforehand.
 - **Local assets never uploaded to the upstream site**: Your cat photos, extracted layers, and generated personal HTML remain on your device and are never uploaded to the upstream site. Share the skill package publicly, while keeping each person's photos and personal HTML saved privately.
-- **License & ownership**: The code and documentation in this skill package are licensed under the [MIT License](LICENSE). The [upstream site](https://pet-the-cat.pages.dev/) content, artwork, and audio belong to their original creator, and personal cat photos along with the derived personal cat assets belong to their respective owners.
+- The **[MIT License](LICENSE)** covers this skill’s code and documentation. The original [Pet the Cat](https://pet-the-cat.pages.dev/) site, code, artwork, and audio belong to zubu and their respective rights holders. Cat photos and assets made from them belong to their respective owners.

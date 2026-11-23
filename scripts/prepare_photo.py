@@ -7,7 +7,10 @@ import json
 from math import isfinite, sqrt
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageCms, ImageDraw, ImageFilter, ImageOps
+try:
+    from PIL import Image, ImageChops, ImageCms, ImageDraw, ImageFilter, ImageOps
+except ImportError:
+    Image = None
 
 if __package__:
     from .skill_i18n import argument_parser, msg
@@ -20,7 +23,6 @@ HEAD = complex(200, 445)
 ROOT = complex(1136.23, 423.56)
 TAIL_SIZE = (684, 200)
 ROOT_X, LAST_SAMPLE_X, TIP_X, CENTER_Y = 20, 646, 658, 100
-RESAMPLE = Image.Resampling.BICUBIC
 
 
 def read_photo(path):
@@ -173,10 +175,10 @@ def frame_body(body, head, root, alpha=None):
         body = body.copy()
         # Remove the background before the RGBA resample so its color cannot bleed into fur.
         body.putalpha(alpha)
-    framed = body.transform(BODY_SIZE, Image.Transform.AFFINE, transform, RESAMPLE)
+    framed = body.transform(BODY_SIZE, Image.Transform.AFFINE, transform, Image.Resampling.BICUBIC)
     if alpha is not None:
         # Bicubic interpolation can ring near sharp edges. A trim may only reduce opacity.
-        before = original_alpha.transform(BODY_SIZE, Image.Transform.AFFINE, transform, RESAMPLE)
+        before = original_alpha.transform(BODY_SIZE, Image.Transform.AFFINE, transform, Image.Resampling.BICUBIC)
         after = ImageChops.darker(before, framed.getchannel("A"))
         framed.putalpha(after)
         visible = [0] + [255] * 255
@@ -233,7 +235,7 @@ def straighten_tail(photo, centers, widths, scale):
     for x, ((top, bottom, _), (next_top, next_bottom, _)) in enumerate(zip(sections, sections[1:])):
         corners = tuple(coord for p in (top, bottom, next_bottom, next_top) for coord in (p.real, p.imag))
         mesh.append(((x, 0, x + 1, TAIL_SIZE[1]), corners))
-    strip = photo.transform(TAIL_SIZE, Image.Transform.MESH, mesh, RESAMPLE)
+    strip = photo.transform(TAIL_SIZE, Image.Transform.MESH, mesh, Image.Resampling.BICUBIC)
 
     # Widths isolate the intended tail section from adjacent fur in tight bends.
     aa = 3
@@ -262,6 +264,8 @@ def main():
         help=msg("inspectHelp"),
     )
     args = parser.parse_args()
+    if not hasattr(Image, "Resampling"):
+        parser.exit(1, msg("pillowRequired") + "\n")
     try:
         # json detects the BOM used by Windows PowerShell as well as plain UTF-8.
         layout = json.loads(args.layout.read_bytes())

@@ -1,4 +1,5 @@
 import concurrent.futures
+import errno
 import json
 import os
 from pathlib import Path
@@ -77,6 +78,28 @@ class PortableFileTests(unittest.TestCase):
             self.assertEqual(successes.count(True), 1)
             self.assertEqual(dest.read_text(encoding="utf-8"), documents[successes.index(True)])
             self.assertEqual(list(dest.parent.iterdir()), [dest])
+
+    def test_photo_help_and_dependency_notice_without_pillow(self):
+        script = skill_i18n.ROOT / "scripts" / "prepare_photo.py"
+        for lang in skill_i18n.LANGUAGES:
+            with self.subTest(lang=lang):
+                cmd = [sys.executable, "-X", "utf8", "-S", str(script), "--lang", lang]
+                help_text = subprocess.run([*cmd, "--help"], capture_output=True)
+                self.assertEqual(help_text.returncode, 0, help_text.stderr)
+                self.assertIn(skill_i18n.msg("photoDescription", lang=lang), help_text.stdout.decode("utf-8"))
+                missing = subprocess.run([*cmd, "photo.jpg", "layout.json", "layers"], capture_output=True)
+                self.assertEqual(missing.returncode, 1)
+                self.assertIn(skill_i18n.msg("pillowRequired", lang=lang), missing.stderr.decode("utf-8"))
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux exclusive rename fallback")
+    def test_filesystem_without_hard_links(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(os, "link", side_effect=OSError(errno.EOPNOTSUPP, "")):
+            path = Path(tmp) / "猫.html"
+            build_session.write_new(path, "first")
+            with self.assertRaises(ValueError):
+                build_session.write_new(path, "second")
+            self.assertEqual(path.read_text(), "first")
+            self.assertEqual(list(path.parent.iterdir()), [path])
 
     def test_system_language_without_shell_locale_variables(self):
         with patch.dict(os.environ, {}, clear=True):

@@ -1,9 +1,11 @@
 """Run a downloaded upstream page and a packaged skill in a fresh desktop project."""
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -16,6 +18,13 @@ from .test_portable import run_script, write_fixture
 def checked(result):
     if result.returncode:
         raise RuntimeError(result.stderr.decode("utf-8", errors="replace"))
+
+
+def run_powershell(shell, command, **variables):
+    env = {**os.environ, **{key: str(value) for key, value in variables.items()}}
+    result = subprocess.run([shell, "-NoProfile", "-NonInteractive", "-Command",
+                             "$ErrorActionPreference='Stop'\n" + command], env=env, capture_output=True)
+    checked(result)
 
 
 def open_session(page, path, name):
@@ -124,8 +133,12 @@ def main(archive, upstream, codex_cli):
         install.mkdir(parents=True)
         subprocess.run(["git", "init", "--quiet", str(project)], check=True)
         assert not discover(project, codex_cli)
-        with zipfile.ZipFile(archive) as bundle:
-            bundle.extractall(install)
+        if os.name == "nt":
+            run_powershell("powershell", "Expand-Archive -LiteralPath $env:QA_ZIP -DestinationPath $env:QA_DEST",
+                           QA_ZIP=archive, QA_DEST=install)
+        else:
+            with zipfile.ZipFile(archive) as bundle:
+                bundle.extractall(install)
         skill = install / "pet-my-cat"
         assert (skill / "SKILL.md").is_file()
         assert discover(project, codex_cli) == ["repo"]
@@ -144,6 +157,19 @@ def main(archive, upstream, codex_cli):
             assert run_script(skill, "build_session.py", *args).returncode != 0
             assert out.read_bytes() == original
             sessions.append((out, name, lang))
+
+        if os.name == "nt":
+            name = '-猫 "みけ" 🐈'
+            for shell in ("powershell", "pwsh"):
+                out = project / (shell + ".html")
+                run_powershell(shell, """
+$env:QA_NAME | Set-Content -LiteralPath $env:QA_TEXT -Encoding UTF8
+& $env:QA_PY $env:QA_BUILD --page $env:QA_PAGE --body $env:QA_BODY --tail $env:QA_TAIL --name-file $env:QA_TEXT --lang ja --out $env:QA_OUT
+exit $LASTEXITCODE
+""", QA_NAME=name, QA_TEXT=project / "猫名.txt", QA_PY=sys.executable, QA_BUILD=skill / "scripts/build_session.py",
+                               QA_PAGE=upstream, QA_BODY=layers / "body.png", QA_TAIL=layers / "tail.png", QA_OUT=out)
+                sessions.append((out, name, "ja"))
+                print(shell + ": constructed a named session through the native shell")
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()

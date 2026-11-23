@@ -2,7 +2,7 @@
 
 # 我家猫来客串
 
-感谢 [zubu（@zubububu）](https://x.com/zubububu) 创作了 **Pet the Cat（猫撫でシミュレーター）**。**Pet My Cat** 是向原作致敬的非官方 Codex Skill。它让你把自家猫的照片带进本地游戏，也能像在原作里一样，摸摸它的背、拨动它的尾巴。
+感谢 [zubu（@zubububu）](https://x.com/zubububu) 创作了 **Pet the Cat（猫撫でシミュレーター）**。**Pet My Cat** 是向原作致敬的非官方 Agent Skill。它让你把自家猫的照片带进本地游戏，也能像在原作里一样，摸摸它的背、拨动它的尾巴。
 
 去原站摸摸猫 → <https://pet-the-cat.pages.dev/>
 
@@ -10,17 +10,17 @@
 
 ## 开始使用
 
-1. **安装技能文件夹**：克隆本仓库，或下载最新发行包 [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip) 先解压，将完整的 `pet-my-cat` 文件夹放进项目的 `.agents/skills/`（即 `<项目目录>/.agents/skills/pet-my-cat`，Windows 为 `<项目目录>\.agents\skills\pet-my-cat`；也可直接让 agent 读取其中的 `SKILL.md`）。本机需已安装可用的 Python 3.8+；照片分层用 Pillow 9.1+（已有图层时只需 Python 标准库）。详见 [Codex 技能目录说明](https://developers.openai.com/codex/skills/)，各平台原生命令见 [SKILL.md](SKILL.md#生成本地会话)。
+1. **下载并解压** [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip)，或克隆本仓库。让能读取本地文件、运行 Python 的 agent 按 `pet-my-cat/SKILL.md` 操作。如果客户端有技能目录，也可把整个 `pet-my-cat` 文件夹放进去。需要 Python 3.8 或更高版本。从照片制作图层还需 Pillow 9.1 或更高版本，已有图层时只需 Python 标准库。[各平台命令](SKILL.md#生成本地会话)
 2. **附上照片并调用**：想保留真实花纹，首选接近垂直俯拍、能看清耳朵、整个背部和从尾根到尾尖的照片。附上手边的照片后，可以直接复制下面的一句话发给 agent：
 
    - **已有俯拍照**：
-     > 用 $pet-my-cat 把我家猫的照片临时加进撸猫网页，在当前标签页里玩。
+     > 用 pet-my-cat 技能（pet-my-cat/SKILL.md）把我家猫的照片临时加进撸猫网页，在当前标签页里玩。
 
    - **用普通生活照生成俯视姿势**：
-     > 用 $pet-my-cat 把豆包临时加进撸猫网页。参考这两张生活照生成俯视姿势，保留照片中可见的斑纹，没拍到的背部花纹可以近似。
+     > 用 pet-my-cat 技能（pet-my-cat/SKILL.md）把豆包临时加进撸猫网页。参考这两张生活照生成俯视姿势，保留照片中可见的斑纹，没拍到的背部花纹可以近似。
 
 3. **在当前标签页或离线游玩**：agent 会在本机准备好个人 HTML。具备浏览器控制能力时，agent 可协助直接装入当前打开的原站标签页。需要手动选择文件时，打开随包的[书签工具](assets/current-tab.html)，按页面提示将书签拖到书签栏，在原站标签页点击书签并选择该 HTML。桌面浏览器也可以直接打开个人 HTML 离线玩。关闭临时视图会回到原先选中的猫；刷新原站即可清除临时视图。
-4. **卸载**：删除 `.agents/skills/` 下的 `pet-my-cat` 文件夹即可。已生成的个人 HTML 可继续保留离线玩，浏览器书签也可按需自行删除。
+4. **卸载时**，删除当初放置的 `pet-my-cat` 文件夹即可。已生成的个人 HTML 可继续离线玩，浏览器书签也可按需删除。
 
 ## 局部修边与细节微调
 

@@ -2,7 +2,7 @@
 
 # Pet My Cat (我家猫来客串)
 
-**Pet My Cat** is a fan-made Codex skill and a tribute to **Pet the Cat** (*猫撫でシミュレーター*), the browser game by [zubu (@zubububu)](https://x.com/zubububu). The original lets you stroke a cat’s back and play with its tail. Give this skill a photo of your own cat, and you can do the same in a local copy of zubu’s game.
+**Pet My Cat** is an unofficial agent skill and a tribute to **Pet the Cat** (*猫撫でシミュレーター*), the browser game by [zubu (@zubububu)](https://x.com/zubububu). The original lets you stroke a cat’s back and play with its tail. Give this skill a photo of your own cat, and you can do the same in a local copy of zubu’s game.
 
 Play the original → <https://pet-the-cat.pages.dev/>
 
@@ -10,17 +10,17 @@ A clear top-down, full-body photo of your cat can be turned directly into an int
 
 ## Getting Started
 
-1. **Install the skill folder**: Clone this repository, or download the latest release archive [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip) and extract it first, then place the complete `pet-my-cat` folder inside your project's `.agents/skills/` directory (`<project>/.agents/skills/pet-my-cat`, or `<project>\.agents\skills\pet-my-cat` on Windows; you can also let your agent read its `SKILL.md` directly). Requires an installed, working Python 3.8+; photo layering uses Pillow 9.1+ (only the Python standard library is needed when layers are already prepared). See the [Codex Skills documentation](https://developers.openai.com/codex/skills/) for details, and [SKILL.md](SKILL.md#生成本地会话) for native OS commands.
+1. **Download and extract** [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip), or clone this repository. Ask an agent that can read local files and run Python to follow `pet-my-cat/SKILL.md`. If your client has a skills directory, you can also place the complete `pet-my-cat` folder there. Use Python 3.8 or later. Preparing the layers from a photo also requires Pillow 9.1 or later. With ready-made layers, the Python standard library is enough. [Platform commands](SKILL.md#生成本地会话)
 2. **Attach photos and invoke**: To preserve your cat's exact coat markings, start with a nearly vertical top-down photo showing the ears, full back, and tail from base to tip. Attach the best photo(s) you have and copy one of these one-line prompts to your agent:
 
    - **With a top-down photo**:
-     > Use $pet-my-cat to temporarily add my cat photo to the cat-petting webpage and play in the current tab.
+     > Use the pet-my-cat skill (pet-my-cat/SKILL.md) to temporarily add my cat photo to the cat-petting webpage and play in the current tab.
 
    - **With everyday photos (generate a top-down posture)**:
-     > Use $pet-my-cat to temporarily add Mochi to the cat-petting webpage. Reference these two everyday photos to generate a top-down posture, keep the visible markings accurate, and approximate the unseen back pattern.
+     > Use the pet-my-cat skill (pet-my-cat/SKILL.md) to temporarily add Mochi to the cat-petting webpage. Reference these two everyday photos to generate a top-down posture, keep the visible markings accurate, and approximate the unseen back pattern.
 
 3. **Play in the current tab or offline**: The agent prepares a personal HTML file on your machine. When browser control is available, it can mount the session directly into your open upstream tab. To load the file manually, open the bundled [bookmarklet tool](assets/current-tab.html), follow the on-page steps to add the bookmarklet, and pick your personal HTML file from the upstream tab. You can also open the personal HTML directly in a desktop browser for offline play. Closing the temporary view restores the previously selected cat, and refreshing the upstream tab clears the temporary session.
-4. **Uninstall**: Delete the `pet-my-cat` folder under `.agents/skills/`. Existing personal HTML files can be kept for offline play, and any saved browser bookmarklet can be removed whenever you like.
+4. **To uninstall**, delete the `pet-my-cat` folder you installed. You can keep playing offline with your saved HTML and remove the browser bookmarklet whenever you like.
 
 ## Local Edge Trimming
 

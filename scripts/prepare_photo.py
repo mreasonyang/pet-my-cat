@@ -263,7 +263,8 @@ def main():
     )
     args = parser.parse_args()
     try:
-        layout = json.loads(args.layout.read_text(encoding="utf-8"))
+        # json detects the BOM used by Windows PowerShell as well as plain UTF-8.
+        layout = json.loads(args.layout.read_bytes())
         photo = read_photo(args.photo)
         for left, top, right, bottom in args.inspect_box:
             if not (0 <= left < right <= photo.width and 0 <= top < bottom <= photo.height):

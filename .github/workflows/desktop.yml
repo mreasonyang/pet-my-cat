@@ -1,0 +1,33 @@
+name: Desktop compatibility
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install photo and browser test dependencies
+        run: python -m pip install Pillow playwright
+      - run: python -m playwright install chromium
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/build_bookmark.py --check
+      - name: Download original page on Windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Invoke-WebRequest -UseBasicParsing -Uri https://pet-the-cat.pages.dev/ -OutFile upstream.html
+      - name: Download original page on Linux
+        if: runner.os == 'Linux'
+        run: curl --fail --location --retry 2 --silent --show-error https://pet-the-cat.pages.dev/ --output upstream.html
+      - name: Build the installable archive
+        run: git archive --format=zip --prefix=pet-my-cat/ -o pet-my-cat.zip HEAD
+      - name: Install, prepare a cat, play offline in three languages, uninstall and reopen
+        run: python -m tests.desktop_smoke pet-my-cat.zip upstream.html

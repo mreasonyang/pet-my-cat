@@ -283,11 +283,15 @@ def write_new(path, document):
     try:
         with out:
             out.write(document.encode("utf-8"))
-        os.link(temporary, path)
+        if os.name == "nt":
+            # Windows rename is atomic and refuses an existing destination, even on exFAT.
+            os.rename(temporary, path)
+        else:
+            os.link(temporary, path)
     except FileExistsError as error:
         raise ValueError(msg("outputExists", path=path)) from error
     finally:
-        temporary.unlink()
+        temporary.unlink(missing_ok=True)
 
 
 def main():

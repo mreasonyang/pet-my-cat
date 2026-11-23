@@ -60,7 +60,12 @@ def discover(project, codex_cli):
             send({"id": 2, "method": "skills/list", "params": request})
             records = response(2)["data"]
             expected = project / ".agents" / "skills" / "pet-my-cat" / "SKILL.md"
-            return [s["scope"] for record in records for s in record["skills"] if Path(s["path"]) == expected]
+            found = [skill for record in records for skill in record["skills"] if skill["name"] == "pet-my-cat"]
+            print("Codex discovery", json.dumps({"project": str(project),
+                  "matches": [(skill["scope"], skill["path"]) for skill in found],
+                  "errors": [error for record in records for error in record.get("errors", [])]}), flush=True)
+            # Windows may return the long form of an 8.3 temp path or a verbatim path.
+            return [s["scope"] for s in found if expected.is_file() and expected.samefile(s["path"])]
         finally:
             timer.cancel()
             server.stdin.close()
@@ -97,7 +102,7 @@ def check_current_tab(browser, upstream, guide_path, session_path):
         cdp.send("Page.enable")
         cdp.send("Page.setInterceptFileChooserDialog", {"enabled": True, "cancel": True})
         opened = []
-        cdp.once("Page.fileChooserOpened", opened.append)
+        cdp.once("Page.fileChooserOpened", lambda event: opened.append(event))
         cdp.send("Runtime.evaluate", {"expression": "(" + mount + ")(undefined, 'ja')", "userGesture": True})
         deadline = time.monotonic() + 8
         while not opened and time.monotonic() < deadline:

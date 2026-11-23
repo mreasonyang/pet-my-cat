@@ -3,10 +3,12 @@
 
 import base64
 import codecs
+import errno
 import json
 import os
 from pathlib import Path
 import struct
+import sys
 import tempfile
 import zlib
 
@@ -247,6 +249,8 @@ def build_session(raw, name, body, tail, lang=None):
             raise ValueError(msg("pageEncoding", lang=lang))
         page = raw.decode("utf-16")
         head, pack_tag, rest = page.partition(PACK_TAG)
+        # Some Windows editors save markup with CRLF. Leave the packed assets intact.
+        head = head.replace("\r\n", "\n")
         pack, close_tag, loader = rest.partition("</script>")
         if (
             not pack_tag or not close_tag or page.count(PACK_TAG) != 1
@@ -276,6 +280,27 @@ def build_session(raw, name, body, tail, lang=None):
     return head.replace(CHARSET_TAG, session_head, 1) + pack_tag + pack + close_tag + loader
 
 
+def publish_new(temporary, path):
+    if os.name == "nt":
+        # Windows rename refuses an existing destination, including on FAT volumes.
+        os.rename(temporary, path)
+        return
+    try:
+        os.link(temporary, path)
+    except OSError as error:
+        if sys.platform != "linux" or error.errno not in (errno.EOPNOTSUPP, errno.EPERM, errno.ENOSYS):
+            raise
+        # Linux filesystems such as exFAT can support exclusive rename but not hard links.
+        import ctypes
+        rename = getattr(ctypes.CDLL(None, use_errno=True), "renameat2", None)
+        if rename is None:
+            raise
+        at_fdcwd, rename_noreplace = -100, 1
+        if rename(at_fdcwd, os.fsencode(temporary), at_fdcwd, os.fsencode(path), rename_noreplace):
+            code = ctypes.get_errno()
+            raise OSError(code, os.strerror(code), str(path)) from error
+
+
 def write_new(path, document):
     # Publish only a finished file, and never replace an existing directory entry.
     out = tempfile.NamedTemporaryFile(dir=path.parent, prefix=".pet-session-", delete=False)
@@ -283,11 +308,11 @@ def write_new(path, document):
     try:
         with out:
             out.write(document.encode("utf-8"))
-        os.link(temporary, path)
+        publish_new(temporary, path)
     except FileExistsError as error:
         raise ValueError(msg("outputExists", path=path)) from error
     finally:
-        temporary.unlink()
+        temporary.unlink(missing_ok=True)
 
 
 def main():
@@ -295,13 +320,19 @@ def main():
     parser.add_argument("--page", type=Path, required=True, help=msg("pageHelp"))
     parser.add_argument("--body", type=Path, required=True, help=msg("bodyHelp"))
     parser.add_argument("--tail", type=Path, required=True, help=msg("tailHelp"))
-    parser.add_argument("--name", help=msg("nameHelp"))
+    names = parser.add_mutually_exclusive_group()
+    names.add_argument("--name", help=msg("nameHelp"))
+    names.add_argument("--name-file", type=Path, help=msg("nameFileHelp"))
     parser.add_argument("--out", type=Path, required=True, help=msg("outHelp"))
     args = parser.parse_args()
-    name = args.name if args.name is not None else catalog(args.lang)["session"]["defaultName"]
-    if not name.strip():
-        parser.error(msg("blankName"))
     try:
+        name = args.name if args.name is not None else catalog(args.lang)["session"]["defaultName"]
+        if args.name_file is not None:
+            raw_name = args.name_file.read_bytes()
+            utf16 = raw_name.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE))
+            name = raw_name.decode("utf-16" if utf16 else "utf-8-sig").rstrip("\r\n")
+        if not name.strip():
+            parser.error(msg("blankName"))
         page = read_limited(args.page, PAGE_LIMIT)
         body = read_texture(args.body, (1517, 935))
         tail = read_texture(args.tail, (684, 200))

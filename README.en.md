@@ -10,7 +10,7 @@ A clear top-down, full-body photo of your cat can be turned directly into an int
 
 ## Getting Started
 
-1. **Install the skill folder**: Clone this repository, or download the latest release archive [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip), extract it, and ensure the complete folder is named `pet-my-cat` inside your project's `.agents/skills/` directory (or let your agent read `pet-my-cat/SKILL.md` directly after extracting). See the [Codex Skills documentation](https://developers.openai.com/codex/skills/) for details.
+1. **Install the skill folder**: Clone this repository, or download the latest release archive [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip) and extract it first, then place the complete `pet-my-cat` folder inside your project's `.agents/skills/` directory (`<project>/.agents/skills/pet-my-cat`, or `<project>\.agents\skills\pet-my-cat` on Windows; you can also let your agent read its `SKILL.md` directly). Requires an installed, working Python 3.8+; photo layering uses Pillow 9.1+ (only the Python standard library is needed when layers are already prepared). See the [Codex Skills documentation](https://developers.openai.com/codex/skills/) for details, and [SKILL.md](SKILL.md#生成本地会话) for native OS commands.
 2. **Attach photos and invoke**: To preserve your cat's exact coat markings, start with a nearly vertical top-down photo showing the ears, full back, and tail from base to tip. Attach the best photo(s) you have and copy one of these one-line prompts to your agent:
 
    - **With a top-down photo**:
@@ -20,6 +20,7 @@ A clear top-down, full-body photo of your cat can be turned directly into an int
      > Use $pet-my-cat to temporarily add Mochi to the cat-petting webpage. Reference these two everyday photos to generate a top-down posture, keep the visible markings accurate, and approximate the unseen back pattern.
 
 3. **Play in the current tab or offline**: The agent prepares a personal HTML file on your machine. When browser control is available, it can mount the session directly into your open upstream tab. To load the file manually, open the bundled [bookmarklet tool](assets/current-tab.html), follow the on-page steps to add the bookmarklet, and pick your personal HTML file from the upstream tab. You can also open the personal HTML directly in a desktop browser for offline play. Closing the temporary view restores the previously selected cat, and refreshing the upstream tab clears the temporary session.
+4. **Uninstall**: Delete the `pet-my-cat` folder under `.agents/skills/`. Existing personal HTML files can be kept for offline play, and any saved browser bookmarklet can be removed whenever you like.
 
 ## Local Edge Trimming
 
@@ -35,6 +36,6 @@ The skill itself supports `zh-CN` (Simplified Chinese), `ja` (Japanese), and `en
 
 ## Local Processing, AI Privacy & License
 
-- **Local assembly & on-demand AI consent**: Your personal webpage is assembled locally using Python 3, and the bundled photo slicing and trimming helper uses Pillow. Real-photo cutouts can be completed entirely on your machine. Only if you choose cloud-based image generation for viewpoint synthesis or partial inpainting will reference photos be sent to an external service—and the agent will name the specific cloud service and ask for your consent beforehand.
+- **Local assembly & on-demand AI consent**: Real-photo cutouts, layer slicing, and personal webpage assembly can all be completed locally on your machine. Only if you choose cloud-based image generation for viewpoint synthesis or partial inpainting will reference photos be sent to an external service—and the agent will name the specific cloud service and ask for your consent beforehand.
 - **Local assets never uploaded to the upstream site**: Your cat photos, extracted layers, and generated personal HTML remain on your device and are never uploaded to the upstream site. Share the skill package publicly, while keeping each person's photos and personal HTML saved privately.
 - The **[MIT License](LICENSE)** covers this skill’s code and documentation. The original [Pet the Cat](https://pet-the-cat.pages.dev/) site, code, artwork, and audio belong to zubu and their respective rights holders. Cat photos and assets made from them belong to their respective owners.

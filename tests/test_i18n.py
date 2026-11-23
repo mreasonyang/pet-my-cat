@@ -43,6 +43,8 @@ class LocaleTests(unittest.TestCase):
         for lang in LANGUAGES:
             with self.subTest(lang=lang):
                 page = build_session.build_session(html.encode("utf-16"), "小七", "", "", lang)
+                windows_page = html.replace("\n", "\r\n").encode("utf-16")
+                self.assertEqual(build_session.build_session(windows_page, "小七", "", "", lang), page)
                 self.assertIn('<html lang="ja">', page)
                 self.assertIn('<title>もとのページ</title></head><body><p>もとの案内</p>', page)
                 self.assertIn(packed_script, page)

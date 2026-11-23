@@ -2,7 +2,7 @@
   "setup": {
     "title": "現在のタブでうちの猫と遊ぶ",
     "language": "言語",
-    "stepBookmark": "ブラウザのブックマークバーを表示し、このリンクをバーにドラッグします。{bookmark}",
+    "stepBookmark": "ブラウザのブックマークバーを表示し、このリンクをバーにドラッグします（またはリンクのアドレスをコピーして手動でブックマークを新規作成し、完全なアドレスをブックマークの URL 欄に貼り付けてください。ブラウザのアドレスバーには貼り付けないでください）。{bookmark}",
     "bookmark": "うちの猫を開く",
     "stepOpen": "すでに開いている猫なでページに切り替えるか、{site}。追加したブックマークをクリックし、agent が生成した個人用 HTML を選択します。ファイル選択画面が開かない場合は「HTML を選択」をクリックしてください。",
     "site": "元のサイトを開く",
@@ -28,7 +28,7 @@
   },
   "session": {
     "defaultName": "うちの猫",
-    "incompatible": "サイトの HTML に互換性がありません。https://pet-the-cat.pages.dev/ から現在の公開ページを再ダウンロードしてください（例: curl -fL）。それでも失敗する場合は、この Skill を更新してください。"
+    "incompatible": "サイトの HTML に互換性がありません。スキルガイドにあるお使いの環境向けのダウンロードコマンドで、https://pet-the-cat.pages.dev/ から現在の公開ページをそのまま再保存してください。それでも失敗する場合は、この Skill を更新してください。"
   },
   "cli": {
     "help": "このヘルプメッセージを表示して終了する",
@@ -40,6 +40,7 @@
     "bodyHelp": "透過 1517×935 PNG（ボディ）",
     "tailHelp": "透過 684×200 PNG（しっぽ）",
     "nameHelp": "猫セレクターに表示する名前（省略可、未指定時は言語ごとの既定名を使用）",
+    "nameFileHelp": "猫の名前を記したプレーンテキストファイル（UTF-8 または BOM 付き UTF-16、引用符などの表記もそのまま保持）",
     "outHelp": "新規作成する UTF-8 HTML ファイル",
     "blankName": "--name は空にできません。",
     "notFile": "{path} は通常のファイルではありません。",
@@ -76,6 +77,7 @@
     "layoutHelp": "references/photo.md に準拠した JSON 注釈ファイル（任意の body_trims ポリゴン対応）",
     "dirHelp": "body.png と tail.png を保存する新規ディレクトリ",
     "inspectHelp": "向き補正後の写真から半開区間の矩形を edge-NN.png として保存します（複数指定可）。元写真、明暗背景での最終ボディ、および該当する場合はトリム前の明暗背景パネルを表示します",
+    "pillowRequired": "現在の Python 環境に Pillow 9.1 以降をインストールしてください（例: python -m pip install \"Pillow>=9.1\"）。",
     "pointOutside": "点 ({x}, {y}) は向き補正後の写真（{width} × {height}）の範囲外です",
     "maskSize": "マスクのサイズは向き補正後の写真と一致する必要があります",
     "outlinePoints": "輪郭ポリゴンには少なくとも 3 つの点が必要です",

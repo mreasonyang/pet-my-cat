@@ -36,13 +36,22 @@ description: 把自家猫临时加到 pet-the-cat.pages.dev 的选猫栏（支�
 
 ## 生成本地会话
 
-获取原站本次公开提供的首页，保留下载的原始字节。用准备好的两张贴图在本机组装个人网页。在私有目录执行以下命令，`skill_dir` 取本技能目录，`layers_dir` 取本轮确认的图层目录（首次通常是 `layers`），`cat_name` 取猫的显示名，`session_lang` 取合法成品语言（`zh-CN`、`ja` 或 `en`）。构建器要求新文件名，复修时可把输出改为 `my-cat-v2.html`。
+获取原站本次公开提供的首页，原样保留下载的原始 UTF-16 字节。用准备好的两张贴图在本机组装个人网页。在私有目录按当前平台执行以下命令：`skill_dir` 取本技能目录，`layers_dir` 取本轮确认的图层目录（首次通常是 `layers`），`cat_name` 取猫的显示名，`session_lang` 取合法成品语言（`zh-CN`、`ja` 或 `en`）。含空格或非 ASCII 字符的路径均加双引号；未取名时可省略 `--name` / `--name-file`（及 `cat-name.txt`）直接使用对应语言的默认名。构建器要求新文件名，复修时可把输出改为 `my-cat-v2.html`。
+
+Bash（Linux / macOS，用 `--name="$cat_name"` 等号形式保留以连字符开头的名字）：
 
 ```sh
 curl --fail --silent --show-error https://pet-the-cat.pages.dev/ -o upstream.html
-python3 "$skill_dir/scripts/build_session.py" \
-  --page upstream.html --body "$layers_dir/body.png" --tail "$layers_dir/tail.png" \
-  --name "$cat_name" --lang "$session_lang" --out my-cat.html
+python3 "$skill_dir/scripts/build_session.py" --page upstream.html --body "$layers_dir/body.png" --tail "$layers_dir/tail.png" --name="$cat_name" --lang "$session_lang" --out my-cat.html
+```
+
+Windows PowerShell 5.1 / 7（用 `curl.exe -o` 或 `Invoke-WebRequest -OutFile` 直接保存原始字节，避免 `curl` 别名与文本重定向转码；先把指定名字写成 UTF-8 文件再传 `--name-file 'cat-name.txt'`，避免 Legacy 传参丢掉名字中的双引号；若无 `py -3` 可改用 `python`）：
+
+```powershell
+curl.exe --fail --silent --show-error https://pet-the-cat.pages.dev/ -o upstream.html
+# 或：Invoke-WebRequest https://pet-the-cat.pages.dev/ -OutFile upstream.html -UseBasicParsing
+[IO.File]::WriteAllText((Join-Path (Get-Location) 'cat-name.txt'), $cat_name)
+py -3 "$skill_dir\scripts\build_session.py" --page upstream.html --body "$layers_dir\body.png" --tail "$layers_dir\tail.png" --name-file 'cat-name.txt' --lang "$session_lang" --out my-cat.html
 ```
 
 已有当次下载件时可直接使用；若离线或网络受限无法拉取原站，先检查私有目录是否已有可用的 `upstream.html`，没有时如实说明需要联网获取一次原站首页或由用户提供保存的首页 HTML。若网站改版导致构建器无法识别，在这份本地下载件中检查选猫按钮、身体与尾巴的资源登记位置，根据实际结构做本次适配，验证后再交付；无法验证时明确说明卡在哪一步。
@@ -60,10 +69,10 @@ python3 "$skill_dir/scripts/build_session.py" \
 核对新增按钮显示这只猫的名字，现有猫仍可切换，切回自家猫能摸背、拨尾。静止时看轮廓，抚摸时观察有没有一小块地板或抓板随毛一起移动，同时检查尾根裂缝和重复的旧尾段。修图后用新版图层重建个人 HTML，重新装入再验收。验过关闭还原后，若用户要在当前标签页继续玩，把验证过的新版会话重新打开。
 
 遇到环境异常时按以下方式处理：
-- **缺少 Pillow**：在私有工作目录创建临时虚拟环境安装 Pillow 后执行 `prepare_photo.py`，不改动系统全局环境。
+- **缺少 Pillow**：在私有工作目录创建临时虚拟环境（Linux / macOS 用 `python3 -m venv .venv`，Windows PowerShell 用 `py -3 -m venv .venv` 或 `python -m venv .venv`），直接调用 `.venv/bin/python` 或 `.\.venv\Scripts\python.exe` 安装 Pillow 并执行 `prepare_photo.py`，无需激活虚拟环境或更改 PowerShell 执行策略，也不改动系统全局环境。
 - **图层或尾部异常**：若尾尖过细、尾根断开或背景粘连，按 [照片分层与姿势对齐](references/photo.md) 修正截面宽度、尾根点或 `body_trims`，输出到新目录后重建。
 - **无法在目标标签页自动挂载**：说明受限于当前预览/沙箱权限，提供个人 HTML 与 [当前标签页入口](assets/current-tab.html) 引导用户用书签装入或离线直接打开。
 
 交付时使用用户的对话语言，说明用了哪张图、在哪个浏览器验证、打开的是当前标签页会话还是离线预览，并提醒如看到边缘有背景残留可随时指出具体位置继续微调。用到生图时，简短指出补绘或推测了哪些不可见部位。
 
-对外分享技能目录或原始分发包。个人会话含当次取得的原站内容和猫主人提供的照片，应留在该用户自己的目录。
+对外分享技能目录或原始分发包（ZIP 先解压，将完整的 `pet-my-cat` 目录放入项目的 `.agents/skills/`；卸载时仅删除该技能目录，既有个人 HTML 与书签可按需保留或删除）。个人会话含当次取得的原站内容和猫主人提供的照片，应留在该用户自己的目录。

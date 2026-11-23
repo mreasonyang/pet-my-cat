@@ -36,13 +36,39 @@
 
 ### Pillow 辅助脚本
 
-在私有工作目录运行下面的命令，`skill_dir` 指向技能目录。需要 Python 3.8 或更新版和 Pillow 9.1 或更新版。如果系统 Python 缺少 Pillow，可在工作目录建临时虚拟环境安装 Pillow，再用该环境的 Python 执行。脚本读取本机图像和标注，创建新的 `layers/` 目录。
+在私有工作目录按当前平台运行下面的单行命令，`skill_dir` 指向技能目录，含空格或非 ASCII 字符的路径均用双引号包裹。需要 Python 3.8+ 和 Pillow 9.1+。脚本读取本机图像和标注，创建新的 `layers/` 目录。
+
+如果当前 Python 环境缺少 Pillow，可先在工作目录建临时虚拟环境并安装依赖（无需激活虚拟环境或更改 PowerShell 执行策略），随后将下文执行命令中的 `python3` / `py -3` 换为 `.venv/bin/python`（Linux / macOS）或 `.\.venv\Scripts\python.exe`（Windows PowerShell）：
+
+Bash（Linux / macOS，可选建虚拟环境与依赖）：
 
 ```sh
-python3 "$skill_dir/scripts/prepare_photo.py" cat.jpg layout.json layers
+python3 -m venv .venv
+.venv/bin/python -m pip install Pillow
 ```
 
-把 agent 量到的坐标写入 `layout.json`。坐标单位为转正后原尺寸工作图的像素，左上为原点，x 向右、y 向下。`head` 是头顶点。`body` 是沿轮廓顺序排列的多边形。`tail` 是从根到尖排列的 `[x, y, 全宽]`，第一个点同时用作身体对齐的尾根，倒数第二个点对到条带 `x=646`。以下示例采用 1200×900 的合成工作图。
+Windows PowerShell 5.1 / 7（可选建虚拟环境与依赖，若无 `py -3` 可改用 `python`）：
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install Pillow
+```
+
+导出图层命令：
+
+Bash（Linux / macOS）：
+
+```sh
+python3 "$skill_dir/scripts/prepare_photo.py" "cat.jpg" "layout.json" "layers"
+```
+
+Windows PowerShell 5.1 / 7：
+
+```powershell
+py -3 "$skill_dir\scripts\prepare_photo.py" "cat.jpg" "layout.json" "layers"
+```
+
+把 agent 量到的坐标写入 `layout.json`（支持普通 UTF-8、UTF-8 BOM 及 Windows PowerShell 5.1 重定向的带 BOM UTF-16）。坐标单位为转正后原尺寸工作图的像素，左上为原点，x 向右、y 向下。`head` 是头顶点。`body` 是沿轮廓顺序排列的多边形。`tail` 是从根到尖排列的 `[x, y, 全宽]`，第一个点同时用作身体对齐的尾根，倒数第二个点对到条带 `x=646`。以下示例采用 1200×900 的合成工作图。
 
 ```json
 {
@@ -62,9 +88,16 @@ python3 "$skill_dir/scripts/prepare_photo.py" cat.jpg layout.json layers
 
 在转正后的原尺寸工作图上选一个包含内侧毛发、可疑边缘和外侧背景的小裁框。沿用之前的 `layout.json`，把预览导出到新目录。以下坐标变量为本次裁框的像素值，右、下边界不包含在框内。可重复传入 `--inspect-box` 对照几处。
 
+Bash（Linux / macOS）：
+
 ```sh
-python3 "$skill_dir/scripts/prepare_photo.py" cat.jpg layout.json layers-review \
-  --inspect-box "$left" "$top" "$right" "$bottom"
+python3 "$skill_dir/scripts/prepare_photo.py" "cat.jpg" "layout.json" "layers-review" --inspect-box "$left" "$top" "$right" "$bottom"
+```
+
+Windows PowerShell 5.1 / 7：
+
+```powershell
+py -3 "$skill_dir\scripts\prepare_photo.py" "cat.jpg" "layout.json" "layers-review" --inspect-box "$left" "$top" "$right" "$bottom"
 ```
 
 打开 `layers-review/edge-01.png`。从左到右是同一裁框的原照、浅底抠图和深冷色底抠图。确认有残留时，给布局加上可选的 `body_trims`。里面每个多边形圈出一块背景。靠猫的一边沿着可辨认的毛尖描点，另一边在外侧背景闭合。多段残留分别画小块，留存原蒙版。下面是一个新增字段的例子，实际坐标要在本次工作图上量取。原蒙版是多边形或灰度图都适用。

@@ -17,7 +17,8 @@ jobs:
           python-version: '3.12'
       - name: Install photo and browser test dependencies
         run: python -m pip install Pillow playwright
-      - run: python -m playwright install chromium
+      - run: python -m playwright install chromium firefox
+      - run: npm install --no-audit --no-fund --prefix .ci-tools @openai/codex@0.170.0
       - run: python -m unittest discover -s tests -v
       - run: python scripts/build_bookmark.py --check
       - name: Download original page on Windows
@@ -30,4 +31,4 @@ jobs:
       - name: Build the installable archive
         run: git archive --format=zip --prefix=pet-my-cat/ -o pet-my-cat.zip HEAD
       - name: Install, prepare a cat, play offline in three languages, uninstall and reopen
-        run: python -m tests.desktop_smoke pet-my-cat.zip upstream.html
+        run: python -m tests.desktop_smoke pet-my-cat.zip upstream.html .ci-tools/node_modules/@openai/codex/bin/codex.js

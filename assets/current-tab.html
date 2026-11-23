@@ -241,7 +241,9 @@ function mountSession(html, language) {
       if (current()) setNotice('readFailed');
     }
   });
-  picker.addEventListener('cancel', () => {
+  picker.addEventListener('cancel', event => {
+    // The file input's cancel event bubbles to the dialog.
+    event.stopPropagation();
     selection++;
     if (stage.firstElementChild) setNotice('');
     else close();

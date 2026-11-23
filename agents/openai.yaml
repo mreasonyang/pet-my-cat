@@ -1,0 +1,4 @@
+interface:
+  display_name: "我家猫来客串"
+  short_description: "用自家猫照片生成可摸背、拨尾的本地选项，在原网页当前标签页或离线体验（简中 / 日本語 / EN）"
+  default_prompt: "用 $pet-my-cat 把我提供的猫照片临时加到撸猫网页，在当前标签页里玩。"

@@ -1,0 +1,309 @@
+<!doctype html>
+<!-- The standalone copy in assets/ is built from src/ and locales/ with scripts/build_bookmark.py. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>@@TITLE@@</title>
+  <style>
+    html { color-scheme: light dark; font: 16px/1.65 Inter, system-ui, sans-serif; }
+    body { max-width: 38rem; margin: 8vh auto; padding: 0 1.25rem; }
+    h1 { font-size: clamp(1.65rem, 5vw, 2.2rem); line-height: 1.25; }
+    .language { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    select { font: inherit; max-width: 100%; }
+    li + li { margin-top: .8rem; }
+    code { overflow-wrap: anywhere; }
+    #bookmark { display: inline-block; margin: .25rem; padding: .35rem .8rem; border-radius: .5rem;
+      background: #275e48; color: white; font-weight: 650; text-decoration: none; cursor: grab; }
+    #bookmark:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+    #hint:empty { margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="page-title">@@TITLE@@</h1>
+    <div class="language">
+      <label for="language" id="language-label">@@LANGUAGE_LABEL@@</label>
+      <select id="language">
+        <option value="zh-CN" lang="zh-CN">简体中文</option>
+        <option value="ja" lang="ja">日本語</option>
+        <option value="en" lang="en">English</option>
+      </select>
+    </div>
+    <ol>
+      <li id="save-step"><a id="bookmark" draggable="true"></a></li>
+      <li id="open-step"><a id="site" href="https://pet-the-cat.pages.dev/" target="_blank" rel="noopener noreferrer"></a></li>
+      <li id="close-step"></li>
+    </ol>
+    <p id="hint" role="status"></p>
+    <p id="privacy"></p>
+    <noscript>@@NO_SCRIPT@@</noscript>
+  </main>
+
+  <script id="mount-session" type="text/plain">
+function mountSession(html, language) {
+  @@LANGUAGE_FUNCTION@@
+  const translations = @@OVERLAY@@;
+  const embedded = typeof html === 'string' &&
+    html.slice(0, 2048).match(/<meta name="pet-my-cat-language" content="(zh-CN|ja|en)">/);
+  const lang = pickLanguage([language, embedded && embedded[1], ...(navigator.languages || []), navigator.language]);
+  let words = translations[lang];
+  if (window.top !== window || location.origin !== 'https://pet-the-cat.pages.dev') {
+    alert(words.wrongSite);
+    return;
+  }
+
+  const stateKey = Symbol.for('pet-the-cat-local.current-tab.v1');
+  const active = window[stateKey];
+  if (active) {
+    active.setLanguage?.(lang);
+    if (html === undefined) active.choose();
+    else active.mount(html);
+    return;
+  }
+
+  const host = document.createElement('div');
+  const root = host.attachShadow({ mode: 'closed' });
+  try {
+    root.innerHTML = `
+      <style>
+        dialog { color-scheme: light dark; box-sizing: border-box; width: min(28rem, calc(100% - 2rem));
+          max-width: none; max-height: none; padding: 0; border: 1px solid GrayText; border-radius: .8rem;
+          background: Canvas; color: CanvasText; font: 15px/1.5 system-ui, sans-serif;
+          overflow: hidden; overscroll-behavior: none; }
+        dialog::backdrop { background: rgb(16 23 21 / 65%); }
+        dialog[data-playing] { inset: 0; width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; }
+        dialog[open] { display: flex; flex-direction: column; }
+        header { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .6rem .8rem; }
+        h2 { margin: 0 auto 0 0; font: 650 1rem system-ui, sans-serif; }
+        button, label { box-sizing: border-box; padding: .35rem .65rem; border: 1px solid GrayText;
+          border-radius: .4rem; background: ButtonFace; color: ButtonText; font: inherit; cursor: pointer; }
+        label { position: relative; }
+        label:focus-within, button:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+        input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        #notice { margin: 0; padding: 0 .8rem .6rem; }
+        #notice:empty { padding: 0; }
+        #stage { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+        iframe { display: block; width: 100%; height: 100%; border: 0; }
+      </style>
+      <dialog aria-labelledby="title">
+        <header>
+          <h2 id="title"></h2>
+          <label><span id="pick-label"></span><input id="picker" type="file"
+            accept=".html,.htm,text/html" autofocus></label>
+          <button type="button" id="close"></button>
+        </header>
+        <p id="notice" role="status"></p>
+        <div id="stage"></div>
+      </dialog>`;
+  } catch {
+    alert(words.blocked);
+    return;
+  }
+
+  const dialog = root.querySelector('dialog');
+  const picker = root.querySelector('#picker');
+  const pickLabel = root.querySelector('#pick-label');
+  const closeButton = root.querySelector('#close');
+  const notice = root.querySelector('#notice');
+  const stage = root.querySelector('#stage');
+  const previousFocus = document.activeElement;
+  const events = new AbortController();
+  const marker = '<meta name="pet-the-cat-local" content="v1">';
+  const token = crypto.randomUUID();
+  const exitMessage = 'pet-the-cat-local:close:' + token;
+  let selection = 0;
+  let noticeKey = 'intro';
+
+  function setNotice(key) {
+    noticeKey = key;
+    notice.textContent = key ? words[key] : '';
+  }
+
+  function setLanguage(next) {
+    words = translations[next];
+    dialog.lang = next;
+    root.getElementById('title').textContent = words.title;
+    pickLabel.textContent = stage.firstElementChild ? words.replaceFile : words.choose;
+    closeButton.textContent = words.close;
+    if (stage.firstElementChild) stage.firstElementChild.title = words.frameTitle;
+    setNotice(noticeKey);
+  }
+  setLanguage(lang);
+
+  // Restrict the inner frame's network navigations from its embedding document.
+  const policy = [
+    "default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'",
+    'img-src data: blob:', 'media-src data: blob:', 'font-src data: blob:',
+    "connect-src 'none'", "frame-src 'none'", "worker-src 'none'", "object-src 'none'",
+    "base-uri 'none'", "form-action 'none'"
+  ].join('; ');
+  const metadata = `<meta http-equiv="Content-Security-Policy" content="${policy}">
+    <meta name="referrer" content="no-referrer"><meta http-equiv="x-dns-prefetch-control" content="off">`;
+  const permissions = "camera 'none'; microphone 'none'; geolocation 'none'";
+
+  function choose() {
+    picker.value = '';
+    picker.focus({ preventScroll: true });
+    if (navigator.userActivation?.isActive === false) return;
+    try {
+      if (typeof picker.showPicker === 'function') picker.showPicker();
+      else picker.click();
+    } catch {
+      // The visible file input still accepts a direct browser gesture.
+    }
+  }
+
+  function mount(source) {
+    selection++;
+    const head = typeof source === 'string' ? source.indexOf('<head>') : -1;
+    const end = head >= 0 ? source.indexOf('</head>', head) : -1;
+    const start = head + '<head>'.length;
+    const header = end > start ? source.slice(start, end) : '';
+    if (!header.includes(marker)) {
+      setNotice('invalid');
+      return;
+    }
+
+    try {
+      // Texture data lives in the body. Parse only the head to check the session marker.
+      const template = document.createElement('template');
+      template.innerHTML = header;
+      if (![...template.content.children].some(element =>
+        element.matches('meta[name="pet-the-cat-local"][content="v1"]'))) {
+        setNotice('invalid');
+        return;
+      }
+      const bootstrap = `<script>
+        for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection', 'mozRTCPeerConnection']) {
+          Object.defineProperty(window, name, { value: undefined, writable: false, configurable: false });
+        }
+        window.addEventListener('keydown', event => {
+          if (event.isTrusted && event.key === 'Escape' && !event.isComposing) {
+            event.preventDefault();
+            top.postMessage(${JSON.stringify(exitMessage)}, 'https://pet-the-cat.pages.dev');
+          }
+        }, true);
+      <\/script>`;
+      const session = source.slice(0, start) + metadata + bootstrap + source.slice(start);
+      const attribute = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+      const frame = document.createElement('iframe');
+      frame.title = words.frameTitle;
+      frame.setAttribute('sandbox', 'allow-scripts');
+      frame.referrerPolicy = 'no-referrer';
+      frame.allow = permissions;
+      frame.srcdoc = `<!doctype html><html lang="${dialog.lang}"><head><meta charset="utf-8">${metadata}
+        <style>html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+        iframe{display:block;width:100%;height:100%;border:0}</style></head><body>
+        <iframe title="${attribute(words.frameTitle)}" sandbox="allow-scripts" referrerpolicy="no-referrer"
+          allow="${permissions}" srcdoc="${attribute(session)}"></iframe></body></html>`;
+      stage.replaceChildren(frame);
+      dialog.dataset.playing = '';
+      pickLabel.textContent = words.replaceFile;
+      setNotice('');
+      closeButton.focus({ preventScroll: true });
+    } catch {
+      setNotice('openFailed');
+    }
+  }
+
+  const controller = { choose, mount, setLanguage };
+  function close() {
+    if (window[stateKey] !== controller) return;
+    delete window[stateKey];
+    events.abort();
+    dialog.close();
+    host.remove();
+    if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+  }
+
+  picker.addEventListener('change', async () => {
+    const file = picker.files[0];
+    picker.value = '';
+    if (!file) return;
+    const request = ++selection;
+    const current = () => request === selection && window[stateKey] === controller;
+    setNotice('reading');
+    try {
+      const source = new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer());
+      if (current()) mount(source);
+    } catch {
+      if (current()) setNotice('readFailed');
+    }
+  });
+  picker.addEventListener('cancel', () => {
+    selection++;
+    if (stage.firstElementChild) setNotice('');
+    else close();
+  });
+  closeButton.addEventListener('click', close);
+  dialog.addEventListener('close', close);
+  dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+  window.addEventListener('message', event => {
+    const sessionWindow = stage.firstElementChild?.contentWindow?.frames[0];
+    if (event.origin === 'null' && event.source === sessionWindow && event.data === exitMessage) close();
+  }, { signal: events.signal });
+  window.addEventListener('pagehide', close, { signal: events.signal });
+  // Modal inertness blocks background targets. Limit bubbling and scrolling from the controls too.
+  for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'keydown', 'keyup']) {
+    host.addEventListener(type, event => event.stopPropagation());
+  }
+  for (const type of ['wheel', 'touchmove']) {
+    host.addEventListener(type, event => { event.preventDefault(); event.stopPropagation(); }, { passive: false });
+  }
+
+  document.documentElement.append(host);
+  try {
+    dialog.showModal();
+  } catch {
+    events.abort();
+    host.remove();
+    alert(words.unavailable);
+    return;
+  }
+  window[stateKey] = controller;
+  if (html === undefined) choose();
+  else mount(html);
+}
+  </script>
+  <script>
+    @@LANGUAGE_FUNCTION@@
+    const messages = @@SETUP@@;
+    const get = id => document.getElementById(id);
+    const bookmark = get('bookmark');
+    const site = get('site');
+    const select = get('language');
+    const source = get('mount-session').textContent.trim();
+    let hintVisible = false;
+
+    function linkedStep(id, sentence, placeholder, link) {
+      const [before, after] = sentence.split(placeholder);
+      get(id).replaceChildren(before, link, after);
+    }
+
+    function showLanguage(lang) {
+      const words = messages[lang];
+      document.documentElement.lang = lang;
+      document.title = get('page-title').textContent = words.title;
+      select.value = lang;
+      get('language-label').textContent = words.language;
+      bookmark.textContent = words.bookmark;
+      bookmark.href = 'javascript:' + encodeURIComponent(`void (${source})(undefined,${JSON.stringify(lang)})`);
+      site.textContent = words.site;
+      linkedStep('save-step', words.stepBookmark, '{bookmark}', bookmark);
+      linkedStep('open-step', words.stepOpen, '{site}', site);
+      get('close-step').textContent = words.stepClose;
+      get('privacy').textContent = words.privacy;
+      get('hint').textContent = hintVisible ? words.hint : '';
+    }
+    showLanguage(pickLanguage([new URLSearchParams(location.search).get('lang'), ...(navigator.languages || []), navigator.language]));
+    select.addEventListener('change', () => showLanguage(select.value));
+    bookmark.addEventListener('click', event => {
+      event.preventDefault();
+      hintVisible = true;
+      get('hint').textContent = messages[select.value].hint;
+    });
+  </script>
+</body>
+</html>

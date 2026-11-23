@@ -21,7 +21,9 @@ def checked(result):
 
 
 def run_powershell(shell, command, **variables):
-    env = {**os.environ, **{key: str(value) for key, value in variables.items()}}
+    # Each PowerShell must resolve modules for its own .NET runtime.
+    env = {key: value for key, value in os.environ.items() if key.upper() != "PSMODULEPATH"}
+    env.update({key: str(value) for key, value in variables.items()})
     result = subprocess.run([shell, "-NoProfile", "-NonInteractive", "-Command",
                              "$ErrorActionPreference='Stop'\n" + command], env=env, capture_output=True)
     checked(result)
@@ -134,8 +136,13 @@ def main(archive, upstream, codex_cli):
         subprocess.run(["git", "init", "--quiet", str(project)], check=True)
         assert not discover(project, codex_cli)
         if os.name == "nt":
-            run_powershell("powershell", "Expand-Archive -LiteralPath $env:QA_ZIP -DestinationPath $env:QA_DEST",
+            run_powershell("powershell", "Add-Type -AssemblyName System.IO.Compression.FileSystem\n"
+                           "[IO.Compression.ZipFile]::ExtractToDirectory($env:QA_ZIP, $env:QA_DEST)",
                            QA_ZIP=archive, QA_DEST=install)
+            ps7_install = project / "PowerShell 7 ZIP"
+            run_powershell("pwsh", "Expand-Archive -LiteralPath $env:QA_ZIP -DestinationPath $env:QA_DEST",
+                           QA_ZIP=archive, QA_DEST=ps7_install)
+            assert (ps7_install / "pet-my-cat" / "SKILL.md").read_bytes() == (install / "pet-my-cat" / "SKILL.md").read_bytes()
         else:
             with zipfile.ZipFile(archive) as bundle:
                 bundle.extractall(install)

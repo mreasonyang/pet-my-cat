@@ -10,7 +10,7 @@
 
 ## 开始使用
 
-1. **安装技能文件夹**：克隆本仓库，或下载最新发行包 [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip) 解压并确认文件夹名为 `pet-my-cat`，将完整的 `pet-my-cat` 文件夹放进项目的 `.agents/skills/`（也可解压后直接让 agent 读取 `pet-my-cat/SKILL.md`）。详见 [Codex 技能目录说明](https://developers.openai.com/codex/skills/)。
+1. **安装技能文件夹**：克隆本仓库，或下载最新发行包 [`pet-my-cat.zip`](https://github.com/mreasonyang/pet-my-cat/releases/latest/download/pet-my-cat.zip) 先解压，将完整的 `pet-my-cat` 文件夹放进项目的 `.agents/skills/`（即 `<项目目录>/.agents/skills/pet-my-cat`，Windows 为 `<项目目录>\.agents\skills\pet-my-cat`；也可直接让 agent 读取其中的 `SKILL.md`）。本机需已安装可用的 Python 3.8+；照片分层用 Pillow 9.1+（已有图层时只需 Python 标准库）。详见 [Codex 技能目录说明](https://developers.openai.com/codex/skills/)，各平台原生命令见 [SKILL.md](SKILL.md#生成本地会话)。
 2. **附上照片并调用**：想保留真实花纹，首选接近垂直俯拍、能看清耳朵、整个背部和从尾根到尾尖的照片。附上手边的照片后，可以直接复制下面的一句话发给 agent：
 
    - **已有俯拍照**：
@@ -20,6 +20,7 @@
      > 用 $pet-my-cat 把豆包临时加进撸猫网页。参考这两张生活照生成俯视姿势，保留照片中可见的斑纹，没拍到的背部花纹可以近似。
 
 3. **在当前标签页或离线游玩**：agent 会在本机准备好个人 HTML。具备浏览器控制能力时，agent 可协助直接装入当前打开的原站标签页。需要手动选择文件时，打开随包的[书签工具](assets/current-tab.html)，按页面提示将书签拖到书签栏，在原站标签页点击书签并选择该 HTML。桌面浏览器也可以直接打开个人 HTML 离线玩。关闭临时视图会回到原先选中的猫；刷新原站即可清除临时视图。
+4. **卸载**：删除 `.agents/skills/` 下的 `pet-my-cat` 文件夹即可。已生成的个人 HTML 可继续保留离线玩，浏览器书签也可按需自行删除。
 
 ## 局部修边与细节微调
 
@@ -35,6 +36,6 @@
 
 ## 本地处理、AI 隐私与许可
 
-- **本机组装与按需 AI 同意**：个人网页在本机由 Python 3 组装，照片分层与修边辅助工具使用 Pillow，实拍抠图全程可在本机完成。仅在需要参考生活照生成俯视姿势或局部补绘、且选用云端图像工具时，参考照片才会发送给对应服务；发送前 agent 会明确告知具体云服务名称并征得你的同意。
+- **本机组装与按需 AI 同意**：实拍抠图、照片分层与个人网页组装全程可在本机完成。仅在需要参考生活照生成俯视姿势或局部补绘、且选用云端图像工具时，参考照片才会发送给对应服务；发送前 agent 会明确告知具体云服务名称并征得你的同意。
 - **本机素材不上传原站**：你的猫照片、切分图层与生成的个人 HTML 均保存在本机，不会上传到原站。公开分享时只需分享技能包本身，每个人的照片和个人 HTML 单独保存在本机。
 - **许可证与归属**　本 Skill 的代码和文档采用 [MIT 许可证](LICENSE)。[Pet the Cat](https://pet-the-cat.pages.dev/) 的网页、代码、美术和音频归 zubu 及相应权利人所有。个人猫咪照片及衍生素材归各自权利人所有。
